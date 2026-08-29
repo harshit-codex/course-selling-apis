@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { adminMiddleware } from "../middlewares/admin.middlewares.js";
 import {
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+
   allCoursesController,
   createCourseController,
   signinController,

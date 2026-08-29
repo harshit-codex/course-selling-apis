@@ -1,48 +1,125 @@
-# Create a course selling app
+# Course Selling APIs
 
-- **STEP 1:** Initialize a new Node.js project
-- **STEP 2:** Add "npm i express jsonwebtoken mongoose dotenv bcrypt cookie-parser" to it as a dependency
-- **STEP 3:** Create index.js
-- **STEP 4:** Add route skeleton for user login, signup, purchase a course, sees all courses, sees the purchased courses course
-- **STEP 5:** Add routes for admin login, admin signup, create a course, delete a course, add course content.
-- **STEP 6:** Define the schema for User, Admin, Course, Purchase
-- **STEP 7:** Add a database (mongodb), use dotenv to store the database connection string
-- **STEP 8:** Add middlewares for user and admin auth
-- **STEP 9:** Complete the routes for user login, signup, purchase a course, see course (Extra points - Use express routing to better structure your routes)
-- **STEP 10:** Create the frontend
+A RESTful backend API for a course selling platform built with Node.js, Express, and MongoDB. Supports separate flows for users (browse & purchase courses) and admins (create & manage courses), with cookie-based JWT authentication and Zod input validation.
 
-# Good to haves
+## Tech Stack
 
-- **TODO 1:** Use cookies instead of JWT for auth
-- **TODO 2:** Add a rate limiting middleware
-- **TODO 3:** Frontend in ejs (low pri)
-- **TODO 4:** Frontend in React
+- **Runtime:** Node.js (ESM)
+- **Framework:** Express.js
+- **Database:** MongoDB via Mongoose
+- **Auth:** JWT stored in HTTP-only cookies
+- **Validation:** Zod
+- **Password hashing:** bcrypt
 
-# API Endpoints
+## Project Structure
 
-## User
+```
+├── index.js                  # Entry point
+├── config/
+│   ├── database.js           # MongoDB connection
+│   └── constant.js           # Shared constants
+├── routes/
+│   ├── user.routes.js        # /api/v1/user
+│   ├── admin.routes.js       # /api/v1/admin
+│   └── courses.routes.js     # /api/v1/course
+├── controllers/
+│   ├── user.controllers.js
+│   ├── admin.controllers.js
+│   └── course.controllers.js
+├── middlewares/
+│   ├── user.middlewares.js   # JWT auth for users
+│   └── admin.middlewares.js  # JWT auth for admins
+├── models/
+│   ├── user.model.js
+│   ├── admin.model.js
+│   ├── course.model.js
+│   └── purchase.model.js
+├── schemas/
+│   ├── user.schemas.js       # Zod schemas for user input
+│   ├── admin.schemas.js
+│   └── course.schemas.js
+└── .env.sample
+```
 
-| Endpoint | Method | Body | Response | Description |
-| --- | --- | --- | --- | --- |
-| /api/v1/user/signup | POST | {email: string, password: string, firstName: string, lastName: string} | {message: string, success: boolean} | User signup |
-| /api/v1/user/signin | POST | {email: string, password: string} | {message: string, success: boolean} | User signin |
-| /api/v1/user/purchases | POST | {courseId: string} | {message: string, success: boolean, courses: courses} | Purchase a course |
-| /api/v1/user/signout | GET | {} | {message: string, success: boolean} | User signout |
+## Getting Started
 
-## Admin
+### Prerequisites
 
-| Endpoint | Method | Body | Response | Description |
-| --- | --- | --- | --- | --- |
-| /api/v1/admin/signup | POST | {email: string, password: string, firstName: string, lastName: string} | {message: string, success: boolean}  | Admin signup |
-| /api/v1/admin/signin | POST | {email: string, password: string} | {message: string, success: boolean} | Admin signin |
-| /api/v1/admin/signout | GET | {} | {message: string, success: boolean} | Admin signout |
-| /api/v1/admin/course | POST | {title: string, description: string, imageUrl: string, price: number} | {message: string, success: boolean, courseId: string} | Create a course |
-| /api/v1/admin/course | PUT | {title: string, description: string, imageUrl: string, price: number, courseId: string} | {message: string, success: boolean} | Update a course |
-| /api/v1/admin/course/bulk | GET | {} | {message: string, success: boolean, courses: courses} | See all courses |
+- Node.js 18+
+- MongoDB instance (local or Atlas)
 
-## Course
+### Installation
 
-| Endpoint | Method | Body | Response | Description |
-| --- | --- | --- | --- | --- |
-| /api/v1/course/purchase | POST | {courseId: string} | {message: string, success: boolean, courses: courses} | Purchase a course |
-| /api/v1/course/preview | GET | {} | {message: string, success: boolean, courses: courses} | See all courses |
+```bash
+git clone <repo-url>
+cd course-selling-apis
+npm install
+```
+
+### Environment Variables
+
+Copy `.env.sample` and fill in the values:
+
+```bash
+cp .env.sample .env
+```
+
+| Variable             | Description                         |
+|----------------------|-------------------------------------|
+| `PORT`               | Server port (default: 5000)         |
+| `MONGODB_URI`        | MongoDB connection string           |
+| `JWT_USER_PASSWORD`  | Secret key for user JWT tokens      |
+| `JWT_ADMIN_PASSWORD` | Secret key for admin JWT tokens     |
+
+### Running the Server
+
+```bash
+# Production
+npm start
+
+# Development (with nodemon)
+npm run dev
+```
+
+## API Reference
+
+Base URL: `http://localhost:<PORT>/api/v1`
+
+### User Routes `/api/v1/user`
+
+| Method | Endpoint     | Auth | Body                                       | Description                  |
+|--------|--------------|------|--------------------------------------------|------------------------------|
+| POST   | `/signup`    | No   | `{ email, password, firstName, lastName }` | Register a new user          |
+| POST   | `/signin`    | No   | `{ email, password }`                      | Sign in and set auth cookie  |
+| GET    | `/purchases` | Yes  | —                                          | Get user's purchased courses |
+| GET    | `/signout`   | Yes  | —                                          | Clear auth cookie            |
+
+### Admin Routes `/api/v1/admin`
+
+| Method | Endpoint       | Auth | Body                                               | Description                |
+|--------|----------------|------|----------------------------------------------------|----------------------------|
+| POST   | `/signup`      | No   | `{ email, password, firstName, lastName }`         | Register a new admin       |
+| POST   | `/signin`      | No   | `{ email, password }`                              | Sign in and set auth cookie|
+| GET    | `/signout`     | Yes  | —                                                  | Clear auth cookie          |
+| POST   | `/course`      | Yes  | `{ title, description, imageUrl, price }`          | Create a new course        |
+| PUT    | `/course`      | Yes  | `{ courseId, title, description, imageUrl, price }`| Update an existing course  |
+| GET    | `/course/bulk` | Yes  | —                                                  | List all admin's courses   |
+
+### Course Routes `/api/v1/course`
+
+| Method | Endpoint    | Auth | Body           | Description                   |
+|--------|-------------|------|----------------|-------------------------------|
+| POST   | `/purchase` | Yes  | `{ courseId }` | Purchase a course (user auth) |
+| GET    | `/preview`  | No   | —              | Browse all available courses  |
+
+## Data Models
+
+**User / Admin** — `email` (unique), `password` (hashed), `firstName`, `lastName`
+
+**Course** — `title`, `description`, `price`, `imageUrl`, `creatorId` (ref: admin)
+
+**Purchase** — links a `userId` to a `courseId`
+
+## Authentication
+
+Auth is handled via HTTP-only cookies. On successful signin, a signed JWT is set as a cookie. Protected routes validate this cookie via the respective middleware before granting access. Users and admins have separate JWT secrets.
